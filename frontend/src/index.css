@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------ base */
+
+@layer base {
+  :root {
+    color-scheme: dark;
+    --tg-bg: #0f0f0f;
+    --tg-panel: #181818;
+    --tg-elevated: #212121;
+    --tg-accent: #8774e1;
+    --tg-border: #2b2b2b;
+    --tg-text: #f4f4f4;
+    --tg-text-muted: #a0a0a0;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3a transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #3a3a3a;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: #4a4a4a;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background-color: var(--tg-bg);
+    color: var(--tg-text);
+    font-family: "Inter", "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+
+  ::selection {
+    background: rgba(135, 116, 225, 0.45);
+    color: #ffffff;
+  }
+
+  button {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  textarea {
+    font-family: inherit;
+  }
+
+  textarea {
+    field-sizing: content;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(135, 116, 225, 0.65);
+    outline-offset: 1px;
+  }
+}
+
+/* -------------------------------------------------- telegram chat wallpaper */
+
+@layer components {
+  /* Dense Telegram Web K style chat pattern, generated in pure CSS. */
+  .chat-wallpaper {
+    background-color: #0f0f0f;
+    background-image:
+      radial-gradient(circle at 18% 22%, rgba(135, 116, 225, 0.07) 0, transparent 42%),
+      radial-gradient(circle at 82% 78%, rgba(43, 82, 120, 0.09) 0, transparent 46%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.028' stroke-width='1.2'%3E%3Cpath d='M12 20c6-6 14-6 20 0'/%3E%3Ccircle cx='64' cy='22' r='7'/%3E%3Cpath d='M70 62l8 12-8 12'/%3E%3Ccircle cx='26' cy='70' r='5'/%3E%3Cpath d='M44 46h14'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: auto, auto, 96px 96px;
+  }
+
+  .bubble-out {
+    background-color: #8774e1;
+    color: #ffffff;
+  }
+
+  .bubble-out::after {
+    content: "";
+    position: absolute;
+    right: -7px;
+    bottom: 0;
+    width: 10px;
+    height: 14px;
+    background-color: inherit;
+    clip-path: polygon(0 0, 100% 100%, 0 100%);
+  }
+
+  .bubble-in {
+    background-color: #212121;
+    color: #f4f4f4;
+  }
+
+  .bubble-in::after {
+    content: "";
+    position: absolute;
+    left: -7px;
+    bottom: 0;
+    width: 10px;
+    height: 14px;
+    background-color: inherit;
+    clip-path: polygon(100% 0, 100% 100%, 0 100%);
+  }
+
+  /*
+   * Удалённое сообщение остаётся в ленте НАВСЕГДА (CONTRACTS_V5 §1.2, §8.1):
+   * это не ошибка, а след, поэтому вид у него нейтрально-серый, а не красный.
+   * Красный в этом интерфейсе значит «опасность/сбой», а здесь всё штатно.
+   *
+   * Палитра — те же токены, что у панелей: #1c1c1c (tg-panelAlt) и
+   * #2b2b2b (tg-border), текст гасится до #a0a0a0 (tg-textMuted) в
+   * MessageBubble. Последний ::after остаётся #212121 (tg-elevated, «хвост»
+   * входящего пузыря), чтобы геометрия не поменялась.
+   */
+  .bubble-deleted {
+    background-color: #1c1c1c;
+    border: 1px solid #3a3a3a;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  }
+
+  /* Мягкое горизонтальное угасание вместо прежней красной штриховки. */
+  .bubble-deleted::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(0, 0, 0, 0.12) 100%);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .glass-panel {
+    background-color: rgba(24, 24, 24, 0.92);
+    backdrop-filter: blur(12px);
+  }
+
+  .scroll-area {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .flash-target {
+    animation: flash-highlight 1.6s ease-out forwards;
+  }
+
+  .tx-chip {
+    @apply inline-flex items-center gap-1 rounded-md border border-tg-accent/40 bg-tg-accent/10 px-1.5 py-0.5 font-mono text-[0.8em] font-medium text-tg-accentHover transition-colors;
+  }
+
+  .tx-chip:hover {
+    @apply border-tg-accent/80 bg-tg-accent/25 text-white;
+  }
+
+  .shift-dot {
+    @apply inline-block h-2 w-2 rounded-full;
+  }
+
+  .divider-v {
+    @apply h-6 w-px bg-tg-border;
+  }
+}
+
+/* ---------------------------------------------------------------- utils */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

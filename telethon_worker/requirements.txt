@@ -1,0 +1,8 @@
+telethon==1.37.0
+redis==5.2.1
+python-dotenv==1.0.1
+cryptg==0.5.0.post1
+orjson==3.10.13
+# Optional at runtime (media.py falls back to thumbnail_path=None without it) but
+# required for photo/video previews in the CRM (CONTRACTS_V2 §5).
+Pillow==11.1.0

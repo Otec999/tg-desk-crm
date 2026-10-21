@@ -1,0 +1,109 @@
+# =============================================================================
+# TG-Desk CRM — development infrastructure (PostgreSQL 16 + Redis 7)
+# =============================================================================
+# Compose v2 ONLY (no top-level `version:` key — it is obsolete and warns).
+#
+# The backend (FastAPI/uvicorn) and the frontend (Vite) run NATIVELY on the
+# host, so they are deliberately NOT defined here. This file only provides
+# the two stateful dependencies they talk to.
+#
+# -----------------------------------------------------------------------------
+# WINDOWS USAGE (Docker Desktop required — Docker Engine runs on the WSL2
+# backend, so make sure "Use the WSL 2 based engine" is enabled).
+# -----------------------------------------------------------------------------
+# 1. Install Docker Desktop, start it and wait until the whale icon is green.
+# 2. (Optional) verify from PowerShell:
+#        docker version
+#        docker compose version
+# 3. From the repo root:
+#        Copy-Item .env.example .env      # only if .env is missing
+#        docker compose -f docker-compose.dev.yml up -d
+#    or simply:
+#        .\make.ps1 up        # Windows
+#        make up              # Linux / macOS / WSL
+# 4. Check that both containers are healthy:
+#        docker compose -f docker-compose.dev.yml ps
+#        .\make.ps1 ps
+# 5. Follow logs:
+#        .\make.ps1 logs      # Ctrl+C to stop following (containers keep running)
+# 6. Stop / remove:
+#        .\make.ps1 down      # keeps data in the named volumes
+#        docker compose -f docker-compose.dev.yml down -v   # ALSO DELETES DATA
+#
+# HOST PORT MAPPING
+#   PostgreSQL : localhost:5433  -> 5432 (inside the container)
+#   Redis      : localhost:6380  -> 6379 (inside the container)
+#   Ports 5432/6379 are avoided on purpose so this stack never collides with a
+#   locally installed PostgreSQL or Redis.
+#
+# NOTES FOR WINDOWS USERS
+#   * .env is read from the repo root (same directory as this file) — keep them
+#     side by side. `.env.example` documents every variable.
+#   * If port 5433 or 6380 is already taken, set POSTGRES_PORT / REDIS_PORT in
+#     .env (and matching values in POSTGRES_PORT / REDIS_URL) and re-run `up`.
+#   * Do NOT use `host.docker.internal` — no code inside Docker needs it, since
+#     the backend runs on the host and reaches the DB via localhost:5433.
+#   * PowerShell 5.1 vs 7: make.ps1 works on both; do not use `&&` inline.
+#   * Linux CI/containers: line endings of .env default to LF — fine as Docker
+#     strips CR, but prefer writing .env with LF to be safe.
+# =============================================================================
+
+name: tgdesk
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: tgdesk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tgcrm}
+      POSTGRES_USER: ${POSTGRES_USER:-tgcrm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tgcrm_pass}
+      # Deterministic collation/encoding for a clean dev database.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      TZ: UTC
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    stop_grace_period: 20s
+    networks:
+      - tgdesk
+
+  redis:
+    image: redis:7-alpine
+    container_name: tgdesk-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    stop_grace_period: 10s
+    networks:
+      - tgdesk
+
+volumes:
+  # Explicit `name:` pins the real Docker volume names regardless of the
+  # Compose project prefix, so `docker volume rm tgdesk_pgdata` just works.
+  pgdata:
+    name: tgdesk_pgdata
+  redisdata:
+    name: tgdesk_redisdata
+
+networks:
+  tgdesk:
+    name: tgdesk_net
+    driver: bridge

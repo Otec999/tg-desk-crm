@@ -1,0 +1,47 @@
+# ==========================================================================================
+# TG-Desk CRM — backend runtime + test dependencies
+# Target: Python 3.12 (CPython 3.12.x), Windows-first install (no C/C++ toolchain required).
+# Every pin below ships a prebuilt wheel for cp312 on win_amd64, so a plain
+#     python -m pip install -r backend/requirements.txt
+# works offline-from-index with no compiler.
+# ==========================================================================================
+
+# ---- Web framework / ASGI server ----
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# ---- Database (async PostgreSQL) ----
+# psycopg is deliberately NOT installed: the app speaks to PostgreSQL only through asyncpg.
+sqlalchemy[asyncio]==2.0.36
+asyncpg==0.30.0
+alembic==1.14.0
+
+# ---- Validation / settings ----
+pydantic==2.10.4
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# ---- Auth ----
+python-jose[cryptography]==3.3.0
+# NOTE: bcrypt is pinned to 4.0.1 on purpose. passlib 1.7.4 (latest release) detects the bcrypt
+# backend version on import and emits "AttributeError: module 'bcrypt' has no attribute '__about__'"
+# / "error reading bcrypt version" with bcrypt >= 4.1. The 4.0.1 release is the last one whose
+# API passlib 1.7.4 fully understands, so DO NOT bump bcrypt until passlib is replaced.
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-multipart==0.0.20
+
+# ---- Redis (pub/sub bus between backend and the Telethon worker) ----
+redis==5.2.1
+
+# ---- HTTP client (dual admin adapters) ----
+httpx==0.28.1
+
+# ---- Config / misc ----
+python-dotenv==1.0.1
+orjson==3.10.13
+websockets==14.1
+
+# ---- Tests ----
+pytest==8.3.4
+pytest-asyncio==0.25.0
